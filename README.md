@@ -65,23 +65,22 @@ sgen "a cozy cabin in the woods" -a 16:9 -s 2K
 This repo includes pixel art reference images to demonstrate the workflow:
 
 ```bash
-sgen "A cute friendly robot with a round head and expressive eyes, sitting at a cozy desk in a recording studio, reading from an open book into a desk microphone. The robot wears headphones. Floating books and music notes surround the scene. Warm lighting, simple clean background. Cartoon illustration style, bold outlines, flat colors, whimsical and playful mood." -r references/pixel1.png -a 3:2 -c 5
+sgen "A cute friendly robot with a round head and expressive eyes, sitting at a cozy desk in a recording studio, reading from an open book into a desk microphone. The robot wears headphones. Floating books and music notes surround the scene. Warm lighting, simple clean background. Cartoon illustration style, bold outlines, flat colors, whimsical and playful mood." -r references/pixel1.png -a 3:2
 ```
 
-![Robot in recording studio](https://github.com/user-attachments/assets/b85ac429-3c88-4605-9945-ddf2af809e6d)
+<img src="https://github.com/user-attachments/assets/b85ac429-3c88-4605-9945-ddf2af809e6d" width="60%" />
 
 Generated metadata:
 
 ```json
 {
-  "command": "sgen \"A cute friendly robot...\" -r references/pixel1.png -a 3:2 -c 5",
+  "command": "sgen \"A cute friendly robot...\" -r references/pixel1.png -a 3:2",
   "prompt": "A cute friendly robot with a round head and expressive eyes...",
   "aspect_ratio": "3:2",
   "size": "1K",
   "reference": ["references/pixel1.png"],
   "job_timestamp": "2026-01-24T15-54-27",
   "generated_at": "2026-01-24T15:54:41.590988",
-  "index": 1,
   "image_tokens": 1120,
   "cost": 0.1344
 }
@@ -117,7 +116,3 @@ AI image generation has natural variation. Generating 3-5 images at once and pic
 ## Acknowledgments
 
 Inspired by [gemimg](https://github.com/minimaxir/gemimg) and [imagemage](https://github.com/quinnypig/imagemage). Built for use with coding agents like Claude Code.
-
-## License
-
-MIT
