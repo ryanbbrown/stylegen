@@ -1,0 +1,13 @@
+.env
+.DS_Store
+__pycache__/
+*.pyc
+
+# Output (keep .gitkeep for folder structure)
+output/images/*
+output/metadata/*
+!output/**/.gitkeep
+
+# Reference repos (for comparison only)
+gemimg/
+imagemage/
