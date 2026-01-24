@@ -47,6 +47,22 @@ sgen "a cozy cabin in the woods" -r my-style.png -c 5
 
 # Different aspect ratios and sizes
 sgen "a cozy cabin in the woods" -a 16:9 -s 2K
+
+# Use flash model (7x cheaper, lower quality)
+sgen "a cozy cabin in the woods" -m flash
+
+# Lower temperature for more consistent results
+sgen "a cozy cabin in the woods" -t 0.5
+```
+
+### Edit Mode
+
+```bash
+# Edit an image (aspect ratio auto-detected)
+sgen edit photo.png "make the sky more dramatic"
+
+# Override aspect ratio
+sgen edit photo.png "add a rainbow" -a 16:9
 ```
 
 ## Options
@@ -55,10 +71,14 @@ sgen "a cozy cabin in the woods" -a 16:9 -s 2K
 |------|-------------|---------|
 | `-r, --reference` | Reference image for style matching (repeatable) | None |
 | `-c, --count` | Number of images to generate in parallel | 1 |
-| `-a, --aspect` | Aspect ratio (1:1, 16:9, 9:16, 4:3, 3:4, etc.) | 1:1 |
-| `-s, --size` | Image size: 1K, 2K, or 4K | 1K |
+| `-a, --aspect` | Aspect ratio (1:1, 16:9, 9:16, 4:3, 3:4, etc.) | 1:1 (auto-detect in edit mode) |
+| `-s, --size` | Image size: 1K, 2K, or 4K (pro model only) | 1K |
+| `-m, --model` | Model: pro or flash | pro |
+| `-t, --temperature` | Temperature 0.0-2.0 (lower = more consistent) | 1.0 |
 | `-n, --name` | Filename prefix | sgen |
 | `-o, --output` | Output directory | output |
+
+**Pricing:** pro ~$0.13/image (1K/2K), ~$0.24 (4K) \| flash ~$0.02/image
 
 ## Example
 
@@ -80,6 +100,8 @@ Generated metadata:
   "prompt": "A cute friendly robot with a round head and expressive eyes...",
   "aspect_ratio": "3:2",
   "size": "1K",
+  "model": "pro",
+  "temperature": 1.0,
   "reference": ["references/pixel1.png"],
   "job_timestamp": "2026-01-24T15-54-27",
   "generated_at": "2026-01-24T15:54:41.590988",
