@@ -1,10 +1,11 @@
 """stylegen - Gemini image generation CLI with style references.
 
-Pricing (as of 2026-01-20, gemini-3-pro-image-preview):
-  - 1K/2K resolution: ~$0.134/image (1,120 image tokens @ $120/1M tokens)
-  - 4K resolution: ~$0.24/image (2,000 image tokens)
-  - Image tokens are ~10x more expensive than text tokens
-  - Source: Google AI pricing page
+Pricing (as of 2026-01-20):
+  Pro (gemini-3-pro-image-preview):
+    - 1K/2K: ~$0.134/image (1,120 tokens @ $120/1M)
+    - 4K: ~$0.24/image (2,000 tokens)
+  Flash (gemini-2.5-flash-image):
+    - ~$0.019/image (1,120 tokens @ $17/1M) - fixed 1K output
 """
 
 import argparse
@@ -23,10 +24,14 @@ load_dotenv()
 
 VALID_ASPECTS = ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "21:9", "5:4", "4:5"]
 VALID_SIZES = ["1K", "2K", "4K"]
+MODELS = {
+    "pro": "gemini-3-pro-image-preview",
+    "flash": "gemini-2.5-flash-image",
+}
 
 # Pricing per 1M tokens (as of 2026-01-20)
-PRICE_PER_M_IMAGE_TOKENS = 120.0  # $120 per 1M image output tokens
-PRICE_PER_M_TEXT_TOKENS = 2.0     # $2 per 1M text input tokens (gemini-3-pro)
+PRICE_PER_M_IMAGE_TOKENS = {"pro": 120.0, "flash": 17.0}  # Pro: $120, Flash: $17
+PRICE_PER_M_TEXT_TOKENS = 2.0  # $2 per 1M text input tokens
 
 def load_image_base64(path: str | Path) -> dict[str, str]:
     """Load image file as base64 string with mime type."""
@@ -65,7 +70,7 @@ def save_image(image_data: Any, output_dir: str | Path, name: str = "gemini", me
     print(f"✓ Saved: {image_path}")
     return image_path
 
-async def generate(prompt: str, reference: list[str] | None = None, aspect_ratio: str = "1:1", image_size: str = "1K") -> tuple[Any, Any]:
+async def generate(prompt: str, reference: list[str] | None = None, aspect_ratio: str = "1:1", image_size: str = "1K", model: str = "pro", temperature: float = 1.0) -> tuple[Any, Any]:
     """Generate image via Gemini API."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
@@ -75,8 +80,11 @@ async def generate(prompt: str, reference: list[str] | None = None, aspect_ratio
         raise ValueError(f"Invalid aspect ratio. Must be one of: {VALID_ASPECTS}")
     if image_size not in VALID_SIZES:
         raise ValueError(f"Invalid size. Must be one of: {VALID_SIZES}")
+    if model not in MODELS:
+        raise ValueError(f"Invalid model. Must be one of: {list(MODELS.keys())}")
 
     client = genai.Client(api_key=api_key)
+    model_name = MODELS[model]
 
     parts = []
     if reference:
@@ -89,17 +97,20 @@ async def generate(prompt: str, reference: list[str] | None = None, aspect_ratio
 
     parts.append({"text": prompt})
 
-    print(f"Generating ({aspect_ratio}, {image_size}): {prompt[:60]}{'...' if len(prompt) > 60 else ''}")
+    print(f"Generating ({model}, {aspect_ratio}, {image_size}, temp={temperature}): {prompt[:50]}{'...' if len(prompt) > 50 else ''}")
+
+    # Build config - Flash model doesn't support image_size
+    image_config = types.ImageConfig(aspect_ratio=aspect_ratio)
+    if model == "pro":
+        image_config = types.ImageConfig(aspect_ratio=aspect_ratio, image_size=image_size)
 
     response = await client.aio.models.generate_content(
-        model="gemini-3-pro-image-preview",
+        model=model_name,
         contents=[{"role": "user", "parts": parts}],
         config=types.GenerateContentConfig(
             response_modalities=["IMAGE"],
-            image_config=types.ImageConfig(
-                aspect_ratio=aspect_ratio,
-                image_size=image_size
-            )
+            temperature=temperature,
+            image_config=image_config
         )
     )
 
@@ -112,7 +123,7 @@ async def generate(prompt: str, reference: list[str] | None = None, aspect_ratio
 
     raise ValueError("No image generated - check your prompt or try again")
 
-def print_usage(response: Any) -> None:
+def print_usage(response: Any, model: str = "pro") -> None:
     """Print token usage and estimated cost."""
     usage = response.usage_metadata
     if not usage:
@@ -125,9 +136,9 @@ def print_usage(response: Any) -> None:
         if detail.modality.value == 'IMAGE':
             image_tokens = detail.token_count
 
-    # Calculate cost
+    # Calculate cost using model-specific pricing
     text_cost = (prompt_tokens / 1_000_000) * PRICE_PER_M_TEXT_TOKENS
-    image_cost = (image_tokens / 1_000_000) * PRICE_PER_M_IMAGE_TOKENS
+    image_cost = (image_tokens / 1_000_000) * PRICE_PER_M_IMAGE_TOKENS[model]
     total_cost = text_cost + image_cost
 
     print(f"Tokens: {prompt_tokens} input, {image_tokens} image output")
@@ -139,7 +150,9 @@ async def generate_single(args: argparse.Namespace, job_timestamp: str, index: i
         prompt=args.prompt,
         reference=args.reference,
         aspect_ratio=args.aspect,
-        image_size=args.size.upper()
+        image_size=args.size.upper(),
+        model=args.model,
+        temperature=args.temperature
     )
 
     # Build metadata for reproducibility
@@ -153,6 +166,10 @@ async def generate_single(args: argparse.Namespace, job_timestamp: str, index: i
         cmd_parts.extend(["-a", args.aspect])
     if args.size.upper() != "1K":
         cmd_parts.extend(["-s", args.size.upper()])
+    if args.model != "pro":
+        cmd_parts.extend(["-m", args.model])
+    if args.temperature != 1.0:
+        cmd_parts.extend(["-t", str(args.temperature)])
     if args.count > 1:
         cmd_parts.extend(["-c", str(args.count)])
 
@@ -169,15 +186,17 @@ async def generate_single(args: argparse.Namespace, job_timestamp: str, index: i
         "name": args.name,
         "aspect_ratio": args.aspect,
         "size": args.size.upper(),
+        "model": args.model,
+        "temperature": args.temperature,
         "reference": args.reference,
         "job_timestamp": job_timestamp,
         "generated_at": datetime.now().isoformat(),
         "index": index,
         "image_tokens": image_tokens,
-        "cost": round((image_tokens / 1_000_000) * PRICE_PER_M_IMAGE_TOKENS, 4)
+        "cost": round((image_tokens / 1_000_000) * PRICE_PER_M_IMAGE_TOKENS[args.model], 4)
     }
 
-    print_usage(response)
+    print_usage(response, args.model)
     return save_image(image_data, args.output, name=args.name, metadata=metadata, job_timestamp=job_timestamp, index=index)
 
 
@@ -185,13 +204,15 @@ async def async_main() -> None:
     parser = argparse.ArgumentParser(
         prog="sgen",
         description="Generate style-matched images via Gemini",
-        epilog="Pricing (2026-01-20): ~$0.134/image at 1K/2K, ~$0.24/image at 4K"
+        epilog="Pricing: pro ~$0.13/image (1K/2K), ~$0.24 (4K) | flash ~$0.02/image"
     )
     parser.add_argument("prompt", help="Image description")
     parser.add_argument("-n", "--name", default="sgen", help="Filename prefix (default: sgen)")
     parser.add_argument("-r", "--reference", action="append", help="Reference image(s) for style matching (can use multiple times)")
     parser.add_argument("-a", "--aspect", default="1:1", help=f"Aspect ratio (default: 1:1). Options: {', '.join(VALID_ASPECTS)}")
-    parser.add_argument("-s", "--size", default="1K", help="Image size: 1K, 2K, or 4K (default: 1K)")
+    parser.add_argument("-s", "--size", default="1K", help="Image size: 1K, 2K, or 4K (default: 1K, pro model only)")
+    parser.add_argument("-m", "--model", default="pro", choices=["pro", "flash"], help="Model to use: pro or flash (default: pro)")
+    parser.add_argument("-t", "--temperature", type=float, default=1.0, help="Temperature 0.0-2.0 (default: 1.0, lower=more consistent)")
     parser.add_argument("-o", "--output", default="output", help="Output directory")
     parser.add_argument("-c", "--count", type=int, default=1, help="Number of images to generate in parallel (default: 1)")
 
