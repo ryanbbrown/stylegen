@@ -1,40 +1,25 @@
 # stylegen
 
-A CLI for generating images with Google's Gemini API, designed around one idea: **your AI-generated images should look like *yours*, not like everyone else's.**
+Minimal CLI for generating images with Google's Gemini API, with style reference support and parallel batch generation.
 
-## The Problem
-
-AI image generation is everywhere now, but the outputs all look the same. Generic. You've seen that "Midjourney look" or that "DALL-E vibe" a thousand times. The web interfaces are convenient, but they're designed for one-off generations, not for building a consistent personal aesthetic.
-
-## The Solution
-
-stylegen is built for a different workflow:
-
-1. **Find or create reference images** that represent your style
-2. **Use those references consistently** across all your generations
-3. **Generate variations in parallel** to find the best output
-4. **Keep metadata for reproducibility** so you can recreate or iterate on any image
-
-This is how you build a personal AI art style that's recognizably yours.
-
-## Features
-
-- **Style references** - Pass 1-2 images that define your aesthetic, and every generation matches that style
-- **Parallel generation** - Generate multiple variations simultaneously with `-c 5` (true async, not sequential)
-- **Rich metadata** - Every image gets a JSON file with the full command, settings, cost, and timestamps
-- **Reproducibility** - Re-run any generation exactly from its metadata
+Built to help maintain a consistent personal style for AI-generated images, so that you don't end up with the same generic style as everyone else.
 
 ## Install
 
 ```bash
-# With uv (recommended)
+# Install as a global CLI tool
 uv tool install git+https://github.com/ryanbbrown/stylegen
+```
 
-# Or clone and install locally
+Or clone the repo if you want the included reference images as a starting point:
+
+```bash
 git clone https://github.com/ryanbbrown/stylegen
 cd stylegen
 uv tool install .
 ```
+
+Output directories are created automatically wherever you run `sgen`.
 
 ## Setup
 
@@ -75,9 +60,36 @@ sgen "a cozy cabin in the woods" -a 16:9 -s 2K
 | `-n, --name` | Filename prefix | sgen |
 | `-o, --output` | Output directory | output |
 
+## Example
+
+This repo includes pixel art reference images to demonstrate the workflow:
+
+```bash
+sgen "A cute friendly robot with a round head and expressive eyes, sitting at a cozy desk in a recording studio, reading from an open book into a desk microphone. The robot wears headphones. Floating books and music notes surround the scene. Warm lighting, simple clean background. Cartoon illustration style, bold outlines, flat colors, whimsical and playful mood." -r references/pixel1.png -a 3:2 -c 5
+```
+
+![Robot in recording studio](https://github.com/user-attachments/assets/b85ac429-3c88-4605-9945-ddf2af809e6d)
+
+Generated metadata:
+
+```json
+{
+  "command": "sgen \"A cute friendly robot...\" -r references/pixel1.png -a 3:2 -c 5",
+  "prompt": "A cute friendly robot with a round head and expressive eyes...",
+  "aspect_ratio": "3:2",
+  "size": "1K",
+  "reference": ["references/pixel1.png"],
+  "job_timestamp": "2026-01-24T15-54-27",
+  "generated_at": "2026-01-24T15:54:41.590988",
+  "index": 1,
+  "image_tokens": 1120,
+  "cost": 0.1344
+}
+```
+
 ## Output
 
-Images and metadata are saved separately:
+Images and rich metadata are saved separately:
 
 ```
 output/
@@ -91,31 +103,16 @@ output/
     └── ...
 ```
 
-Each metadata JSON includes:
-- Full command to reproduce the generation
-- Prompt and all settings
-- Reference image paths
-- Token usage and cost
-- Timestamps
-
 ## Design Decisions
 
 **Why separate JSON metadata instead of embedding in PNG?**
-Easier to search, parse, and use programmatically. You can `grep` through your metadata, pipe it to `jq`, or let a coding agent read it.
+
+Easier to search, parse, and use programmatically. You can `grep` through your metadata, pipe it to `jq`, or let a coding agent read it and re-run the command.
 
 **Why parallel generation?**
+
 AI image generation has natural variation. Generating 3-5 images at once and picking the best is faster than generating one, deciding it's not quite right, and regenerating.
 
-**Why job timestamps?**
-Images from the same batch share a timestamp, so they sort together. The individual completion time is in the metadata if you need it.
-
-## Pricing
-
-As of January 2026 (gemini-3-pro-image-preview):
-- 1K/2K resolution: ~$0.13/image
-- 4K resolution: ~$0.24/image
-
-Cost is tracked per-image in the metadata.
 
 ## Acknowledgments
 
