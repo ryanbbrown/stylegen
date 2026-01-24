@@ -1,39 +1,47 @@
-# image-gen
+# stylegen
 
 CLI for generating images with Google's Gemini API, with support for style references and parallel batch generation.
+
+## Install
+
+```bash
+# Install globally with uv
+uv tool install git+https://github.com/ryanbbrown/stylegen
+
+# Or clone and install locally
+git clone https://github.com/ryanbbrown/stylegen
+cd stylegen
+uv tool install .
+```
 
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
-2. Copy `.env.example` to `.env` and add your key:
+2. Create a `.env` file (or export the variable):
    ```
    GEMINI_API_KEY=your_api_key_here
-   ```
-3. Install dependencies:
-   ```bash
-   uv sync
    ```
 
 ## Usage
 
 ```bash
 # Basic generation
-uv run gemini.py "a robot in a forest"
+sgen "a robot in a forest"
 
 # With style reference (e.g., pixel art)
-uv run gemini.py "a robot in a forest" -r references/pixel1.png
+sgen "a robot in a forest" -r references/pixel1.png
 
 # Multiple style references
-uv run gemini.py "a robot in a forest" -r references/pixel1.png -r references/pixel2.png
+sgen "a robot in a forest" -r references/pixel1.png -r references/pixel2.png
 
 # Custom aspect ratio and size
-uv run gemini.py "a robot in a forest" -a 16:9 -s 2K
+sgen "a robot in a forest" -a 16:9 -s 2K
 
 # Generate 5 variations in parallel
-uv run gemini.py "a robot in a forest" -r references/pixel1.png -c 5
+sgen "a robot in a forest" -r references/pixel1.png -c 5
 
 # Custom output name
-uv run gemini.py "a robot in a forest" -n robot-forest
+sgen "a robot in a forest" -n robot-forest
 ```
 
 ## Options
@@ -44,7 +52,7 @@ uv run gemini.py "a robot in a forest" -n robot-forest
 | `-a, --aspect` | Aspect ratio: 1:1, 16:9, 9:16, 4:3, 3:4, etc. | 1:1 |
 | `-s, --size` | Image size: 1K, 2K, or 4K | 1K |
 | `-c, --count` | Number of images to generate in parallel | 1 |
-| `-n, --name` | Custom name for output file | gemini |
+| `-n, --name` | Filename prefix | sgen |
 | `-o, --output` | Output directory | output |
 
 ## Output
@@ -65,8 +73,8 @@ As of January 2026 (gemini-3-pro-image-preview):
 
 ## Example: Pixel Art Style
 
-The included reference images (`references/pixel1.png`, `references/pixel2.png`) demonstrate style-matched generation for pixel art:
+The included reference images (`references/pixel1.png`, `references/pixel2.png`) demonstrate style-matched generation:
 
 ```bash
-uv run gemini.py "a cozy tavern with a fireplace" -r references/pixel1.png -r references/pixel2.png -c 3
+sgen "a cozy tavern with a fireplace" -r references/pixel1.png -r references/pixel2.png -c 3
 ```

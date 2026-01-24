@@ -1,8 +1,4 @@
-# /// script
-# requires-python = ">=3.10"
-# dependencies = ["google-genai", "python-dotenv"]
-# ///
-"""Gemini image generation CLI.
+"""stylegen - Gemini image generation CLI with style references.
 
 Pricing (as of 2026-01-20, gemini-3-pro-image-preview):
   - 1K/2K resolution: ~$0.134/image (1,120 image tokens @ $120/1M tokens)
@@ -147,8 +143,8 @@ async def generate_single(args: argparse.Namespace, job_timestamp: str, index: i
     )
 
     # Build metadata for reproducibility
-    cmd_parts = ["uv", "run", "gemini.py", args.prompt]
-    if args.name != "gemini":
+    cmd_parts = ["sgen", args.prompt]
+    if args.name != "sgen":
         cmd_parts.extend(["-n", args.name])
     if args.reference:
         for ref in args.reference:
@@ -187,11 +183,12 @@ async def generate_single(args: argparse.Namespace, job_timestamp: str, index: i
 
 async def async_main() -> None:
     parser = argparse.ArgumentParser(
-        description="Generate images via Gemini",
+        prog="sgen",
+        description="Generate style-matched images via Gemini",
         epilog="Pricing (2026-01-20): ~$0.134/image at 1K/2K, ~$0.24/image at 4K"
     )
     parser.add_argument("prompt", help="Image description")
-    parser.add_argument("-n", "--name", default="gemini", help="Image name for filename (default: gemini)")
+    parser.add_argument("-n", "--name", default="sgen", help="Filename prefix (default: sgen)")
     parser.add_argument("-r", "--reference", action="append", help="Reference image(s) for style matching (can use multiple times)")
     parser.add_argument("-a", "--aspect", default="1:1", help=f"Aspect ratio (default: 1:1). Options: {', '.join(VALID_ASPECTS)}")
     parser.add_argument("-s", "--size", default="1K", help="Image size: 1K, 2K, or 4K (default: 1K)")
