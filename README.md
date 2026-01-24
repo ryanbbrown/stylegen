@@ -53,6 +53,9 @@ sgen "a cozy cabin in the woods" -m flash
 
 # Lower temperature for more consistent results
 sgen "a cozy cabin in the woods" -t 0.5
+
+# Prompt from file (for longer/reusable prompts)
+sgen prompts/my-style.md -r style.png
 ```
 
 ### Edit Mode
@@ -135,6 +138,10 @@ Easier to search, parse, and use programmatically. You can `grep` through your m
 **Why parallel generation?**
 
 AI image generation has natural variation. Generating 3-5 images at once and picking the best is faster than generating one, deciding it's not quite right, and regenerating.
+
+**Why no built-in prompt management?**
+
+Prompts can be passed as text or as a file path (if the path exists, its contents are used). Beyond that, prompt management is left to you and your tools. Store prompts in version-controlled files, use templates, or let a coding agent manage them—whatever fits your workflow.
 
 
 ## Acknowledgments

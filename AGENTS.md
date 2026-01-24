@@ -40,9 +40,14 @@ sgen "a castle on a hill" -c 5
 # Use flash model (cheaper)
 sgen "a castle on a hill" -m flash
 
+# Prompt from file
+sgen prompts/castle.md -r style.png
+
 # Edit an existing image
 sgen edit photo.png "make the sky more dramatic"
 ```
+
+Prompts can be text or file paths. If path exists, contents are used as prompt.
 
 ## Output Structure
 

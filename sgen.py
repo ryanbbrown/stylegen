@@ -49,6 +49,13 @@ def detect_aspect_ratio(path: str | Path) -> str:
     ratio = width / height
     return min(VALID_ASPECTS, key=lambda ar: abs(ratio - int(ar.split(":")[0]) / int(ar.split(":")[1])))
 
+def load_prompt(prompt_or_path: str) -> tuple[str, str | None]:
+    """Load prompt from file if path exists, otherwise return as-is. Returns (prompt, source_file)."""
+    path = Path(prompt_or_path)
+    if path.exists() and path.is_file():
+        return path.read_text().strip(), str(path)
+    return prompt_or_path, None
+
 def save_image(image_data: Any, output_dir: str | Path, name: str = "gemini", metadata: dict | None = None, job_timestamp: str | None = None, index: int | None = None) -> Path:
     """Save image and metadata to separate subdirectories."""
     output_dir = Path(output_dir)
@@ -163,8 +170,12 @@ def print_usage(response: Any, model: str = "pro") -> None:
 
 async def generate_single(args: argparse.Namespace, job_timestamp: str, index: int | None = None) -> Path:
     """Generate a single image and save it."""
+    prompt, prompt_file = load_prompt(args.prompt)
+    if prompt_file:
+        print(f"Using prompt from: {prompt_file}")
+
     image_data, response = await generate(
-        prompt=args.prompt,
+        prompt=prompt,
         reference=args.reference,
         aspect_ratio=args.aspect,
         image_size=args.size.upper(),
@@ -173,7 +184,7 @@ async def generate_single(args: argparse.Namespace, job_timestamp: str, index: i
     )
 
     # Build metadata for reproducibility
-    cmd_parts = ["sgen", args.prompt]
+    cmd_parts = ["sgen", args.prompt]  # Use original arg (file path or text)
     if args.name != "sgen":
         cmd_parts.extend(["-n", args.name])
     if args.reference:
@@ -199,7 +210,8 @@ async def generate_single(args: argparse.Namespace, job_timestamp: str, index: i
 
     metadata = {
         "command": " ".join(f'"{p}"' if " " in p else p for p in cmd_parts),
-        "prompt": args.prompt,
+        "prompt": prompt,
+        "prompt_file": prompt_file,
         "name": args.name,
         "aspect_ratio": args.aspect,
         "size": args.size.upper(),
@@ -219,13 +231,17 @@ async def generate_single(args: argparse.Namespace, job_timestamp: str, index: i
 
 async def edit_single(args: argparse.Namespace, job_timestamp: str) -> Path:
     """Edit a single image and save it."""
+    instruction, instruction_file = load_prompt(args.instruction)
+    if instruction_file:
+        print(f"Using instruction from: {instruction_file}")
+
     # Auto-detect aspect ratio if not specified
     aspect = args.aspect if args.aspect else detect_aspect_ratio(args.image)
     if not args.aspect:
         print(f"Auto-detected aspect ratio: {aspect}")
 
     image_data, response = await generate(
-        prompt=args.instruction,
+        prompt=instruction,
         input_image=args.image,
         aspect_ratio=aspect,
         image_size=args.size.upper(),
@@ -234,7 +250,7 @@ async def edit_single(args: argparse.Namespace, job_timestamp: str) -> Path:
     )
 
     # Build metadata for reproducibility
-    cmd_parts = ["sgen", "edit", args.image, args.instruction]
+    cmd_parts = ["sgen", "edit", args.image, args.instruction]  # Use original arg
     if args.name != "sgen":
         cmd_parts.extend(["-n", args.name])
     if args.aspect:
@@ -256,7 +272,8 @@ async def edit_single(args: argparse.Namespace, job_timestamp: str) -> Path:
     metadata = {
         "command": " ".join(f'"{p}"' if " " in p else p for p in cmd_parts),
         "mode": "edit",
-        "instruction": args.instruction,
+        "instruction": instruction,
+        "instruction_file": instruction_file,
         "input_image": args.image,
         "name": args.name,
         "aspect_ratio": aspect,
