@@ -113,6 +113,19 @@ Generated metadata:
 }
 ```
 
+A few more examples using the same style reference:
+
+<table>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/e5cddf4d-2f62-49e4-860a-b0cf035e8c41" width="100%" /></td>
+    <td><img src="https://github.com/user-attachments/assets/a5119f3a-7731-49cc-9e68-e0134a66677f" width="100%" /></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/d17539d9-0438-4774-a9dc-f0a3454818b4" width="100%" /></td>
+    <td><img src="https://github.com/user-attachments/assets/224dda80-7d6e-4d6c-b914-1a2b46fa595b" width="100%" /></td>
+  </tr>
+</table>
+
 ## Output
 
 Images and rich metadata are saved separately:
