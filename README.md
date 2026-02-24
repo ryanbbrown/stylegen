@@ -91,8 +91,9 @@ This repo includes pixel art reference images to demonstrate the workflow:
 sgen "A cute friendly robot with a round head and expressive eyes, sitting at a cozy desk in a recording studio, reading from an open book into a desk microphone. The robot wears headphones. Floating books and music notes surround the scene. Warm lighting, simple clean background. Cartoon illustration style, bold outlines, flat colors, whimsical and playful mood." -r references/pixel1.png -a 3:2
 ```
 
+
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/b85ac429-3c88-4605-9945-ddf2af809e6d" width="60%" />
+  <img src="https://github-production-user-asset-6210df.s3.amazonaws.com/56168848/540163721-b85ac429-3c88-4605-9945-ddf2af809e6d.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20260224%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260224T005713Z&X-Amz-Expires=300&X-Amz-Signature=a3f860111733e6bb3eb81b6e43d2b38d3d98253efd7cd1d79a0455e147d8c60e&X-Amz-SignedHeaders=host" width="60%" />
 </p>
 
 Generated metadata:
