@@ -1,6 +1,6 @@
 # stylegen
 
-Minimal CLI for generating images with Google's Gemini API, with style reference support and parallel batch generation.
+Minimal CLI for generating images with Google's Gemini API or OpenAI's gpt-image-2, with style reference support and parallel batch generation.
 
 Built to help maintain a consistent personal style for AI-generated images, so that you don't end up with the same generic style as everyone else.
 
@@ -30,6 +30,8 @@ Output directories are created automatically wherever you run `sgen`.
    ```
    Or create a `.env` file in your working directory.
 
+To use `-m gpt`, also set an [OpenAI API key](https://platform.openai.com/api-keys) as `OPENAI_API_KEY`. Each key is only required for the models that use it, so you can run with just one.
+
 ## Usage
 
 ```bash
@@ -50,6 +52,9 @@ sgen "a cozy cabin in the woods" -a 16:9 -s 2K
 
 # Use flash model (7x cheaper, lower quality)
 sgen "a cozy cabin in the woods" -m flash
+
+# Use OpenAI's gpt-image-2 instead of Gemini
+sgen "a cozy cabin in the woods" -m gpt -r my-style.png
 
 # Lower temperature for more consistent results
 sgen "a cozy cabin in the woods" -t 0.5
@@ -75,13 +80,28 @@ sgen edit photo.png "add a rainbow" -a 16:9
 | `-r, --reference` | Reference image for style matching (repeatable) | None |
 | `-c, --count` | Number of images to generate in parallel | 1 |
 | `-a, --aspect` | Aspect ratio (1:1, 16:9, 9:16, 4:3, 3:4, etc.) | 1:1 (auto-detect in edit mode) |
-| `-s, --size` | Image size: 1K, 2K, or 4K (pro model only) | 1K |
-| `-m, --model` | Model: pro or flash | pro |
-| `-t, --temperature` | Temperature 0.0-2.0 (lower = more consistent) | 1.0 |
+| `-s, --size` | Image size: 1K, 2K, or 4K (ignored by flash; 2K/4K experimental on gpt) | 1K |
+| `-m, --model` | Model: pro, flash, or gpt | pro |
+| `-t, --temperature` | Temperature 0.0-2.0 (lower = more consistent; Gemini models only) | 1.0 |
 | `-n, --name` | Filename prefix | sgen |
 | `-o, --output` | Output directory | output |
 
-**Pricing:** pro ~$0.13/image (1K/2K), ~$0.24 (4K) \| flash ~$0.02/image
+**Pricing:** pro ~$0.13/image (1K/2K), ~$0.24 (4K) \| flash ~$0.02/image \| gpt ~$0.12-0.21/image (1K)
+
+## Models
+
+| `-m` | Model | Provider |
+|------|-------|----------|
+| `pro` | `gemini-3-pro-image-preview` | Google |
+| `flash` | `gemini-2.5-flash-image` | Google |
+| `gpt` | `gpt-image-2` | OpenAI |
+
+Every flag except `-t` works the same on all three. Two differences are worth knowing about `-m gpt`:
+
+- **No temperature.** OpenAI's Images API has no temperature parameter. Passing `-t` prints a warning and is ignored rather than silently dropped.
+- **Quality is pinned to `high`.** OpenAI's default (`auto`) can pick `low`, which defeats the point of style matching. Quality is the single biggest cost lever on that model, so it is fixed rather than exposed as a flag.
+
+Under the hood, `-a` and `-s` are mapped to a literal pixel size, since gpt-image-2 takes dimensions rather than an aspect ratio. All ten aspect ratios and all three size tiers work; requests are kept inside OpenAI's limits (edges a multiple of 16, at most 3840px, under 8.29M pixels total). Reference images and `edit` go through OpenAI's edits endpoint, because its generate endpoint accepts no images. Up to 16 references.
 
 ## Example
 
@@ -105,6 +125,7 @@ Generated metadata:
   "aspect_ratio": "3:2",
   "size": "1K",
   "model": "pro",
+  "provider": "gemini",
   "temperature": 1.0,
   "reference": ["references/pixel1.png"],
   "job_timestamp": "2026-01-24T15-54-27",

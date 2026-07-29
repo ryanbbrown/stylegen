@@ -1,6 +1,6 @@
 # stylegen
 
-Generate images using Google's Gemini API with style reference support.
+Generate images using Google's Gemini API or OpenAI's gpt-image-2, with style reference support.
 
 ## Usage
 
@@ -15,9 +15,9 @@ sgen edit <image> "<instruction>" [options]
 |------|-------------|---------|
 | `-r, --reference` | Reference image for style matching (repeatable) | None |
 | `-a, --aspect` | Aspect ratio (1:1, 16:9, 9:16, 4:3, 3:4, etc.) | 1:1 (auto-detect in edit) |
-| `-s, --size` | Image size: 1K, 2K, or 4K (pro only) | 1K |
-| `-m, --model` | Model: pro or flash | pro |
-| `-t, --temperature` | Temperature 0.0-2.0 | 1.0 |
+| `-s, --size` | Image size: 1K, 2K, or 4K (ignored by flash; 2K/4K experimental on gpt) | 1K |
+| `-m, --model` | Model: pro, flash, or gpt | pro |
+| `-t, --temperature` | Temperature 0.0-2.0 (gemini models only) | 1.0 |
 | `-c, --count` | Number of images to generate in parallel | 1 |
 | `-n, --name` | Filename prefix | sgen |
 | `-o, --output` | Output directory | output |
@@ -40,6 +40,9 @@ sgen "a castle on a hill" -c 5
 # Use flash model (cheaper)
 sgen "a castle on a hill" -m flash
 
+# Use OpenAI's gpt-image-2
+sgen "a castle on a hill" -m gpt -r references/pixel1.png
+
 # Prompt from file
 sgen prompts/castle.md -r style.png
 
@@ -59,7 +62,18 @@ output/
     └── {timestamp}-{name}[-{n}].json
 ```
 
+## Models
+
+| `-m` | Model | Notes |
+|------|-------|-------|
+| `pro` | gemini-3-pro-image-preview | Default |
+| `flash` | gemini-2.5-flash-image | Cheapest; fixed 1K output |
+| `gpt` | gpt-image-2 | Quality pinned to `high`; no temperature control |
+
+The gpt path maps `-a`/`-s` to a pixel size (gpt-image-2 takes no aspect ratio), and routes `-r` references and `edit` through the OpenAI edits endpoint, since its generate endpoint accepts no images. Max 16 references.
+
 ## Requirements
 
-- `GEMINI_API_KEY` in `.env` or environment
+- `GEMINI_API_KEY` in `.env` or environment (pro/flash)
+- `OPENAI_API_KEY` in `.env` or environment (gpt)
 - Python 3.10+
